@@ -6,3 +6,18 @@
 //
 
 import Foundation
+import SwiftUI
+internal import Combine
+
+struct MainScreenView : View {
+    @StateObject private var viewModel = MainScreenViewModel(AI: false)
+    
+    var body: some View {
+        BoardView(viewModel: viewModel)
+    }
+}
+
+
+#Preview {
+    MainScreenView()
+}
