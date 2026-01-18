@@ -5,14 +5,14 @@
 //  Created by Артемий Образцов on 17.01.2026.
 //
 
+internal import Combine
 import Foundation
 import SwiftUI
-internal import Combine
 
-class Cell : ObservableObject {
-    var x, y : Int
-    @Published var color : Character
-    
+class Cell: ObservableObject {
+    var x, y: Int
+    @Published var color: Character
+
     init() {
         self.x = 0
         self.y = 0
@@ -20,13 +20,25 @@ class Cell : ObservableObject {
     }
 }
 
+enum BoardError: Error {
+    case NotEmptyField
+    case NotNearOponent
+}
 
-class Board : ObservableObject {
+extension BoardError: LocalizedError {
+    public var errorDescription: String? {
+        switch self {
+        case .NotEmptyField: "Field is not empty, try one more time"
+        case .NotNearOponent: "You shoud put your piece near an oponent piece"
+        }
+    }
+
+}
+class Board: ObservableObject {
     static let SIZE = 8
-   
-    
-    @Published private var cells : [[Cell]]
-    
+
+    @Published private var cells: [[Cell]]
+
     private func makeDefault() {
         for i in 0..<Board.SIZE {
             for j in 0..<Board.SIZE {
@@ -41,7 +53,7 @@ class Board : ObservableObject {
         self.cells[4][3].color = "B"
         self.cells[4][4].color = "W"
     }
-    
+
     init() {
         self.cells = (0..<Board.SIZE).map { i in
             (0..<Board.SIZE).map { j in
@@ -53,12 +65,186 @@ class Board : ObservableObject {
         }
         makeDefault()
     }
-    
-    func getCell(row : Int, col : Int) -> Cell {
+
+    func getCell(row: Int, col: Int) -> Cell {
         return cells[row][col]
     }
+
+    func makeMove(row: Int, col: Int, color: Character) throws {
+        if self.cells[row][col].color == "0" {
+            var nearOponents = false
+            for dx in -1...1 {
+                for dy in -1...1 {
+                    if (dx != 0 || dy != 0) && 0 <= row + dx
+                        && row + dx < Board.SIZE && 0 <= col + dy
+                        && col + dy < Board.SIZE
+                        && ((self.cells[row + dx][col + dy].color == "B"
+                            && color == "W")
+                            || (self.cells[row + dx][col + dy].color == "W"
+                                && color == "B"))
+                    {
+                        nearOponents = true
+                    }
+                }
+            }
+            if !nearOponents {
+                throw BoardError.NotNearOponent
+            } else {
+                self.cells[row][col].color = color
+            }
+            makeReverse(row: row, col: col, color: color)
+
+        } else {
+            throw BoardError.NotEmptyField
+        }
+    }
     
-    func makeMove(row: Int, col: Int, color: Character) {
+    private func reverse(reverseCondidats: inout [Cell], color: Character) {
+        if (reverseCondidats.count > 2 && reverseCondidats.last?.color == color) {
+            for cell in reverseCondidats {
+                cell.color = color
+            }
+        }
+        reverseCondidats = [reverseCondidats[0]]
+    }
+    
+    private func makeReverse(row: Int, col: Int, color: Character) {
+        var reverseCondidats: [Cell] = [self.cells[row][col]]
+        // Horizontal
+        // Left
+        for dy in 1...7 {
+            if (col - dy < Board.SIZE && col - dy >= 0) {
+                if self.cells[row][col - dy].color != "0" {
+                    if self.cells[row][col - dy].color != color {
+                        reverseCondidats.append(self.cells[row][col - dy])
+                    } else {
+                        reverseCondidats.append(self.cells[row][col - dy])
+                        break
+                    }
+                } else {
+                    break
+                }
+            }
+        }
+        reverse(reverseCondidats: &reverseCondidats, color: color)
+        // Right
+        for dy in 1...7 {
+            if (col + dy < Board.SIZE && col + dy >= 0) {
+                if self.cells[row][col + dy].color != "0" {
+                    if self.cells[row][col + dy].color != color {
+                        reverseCondidats.append(self.cells[row][col + dy])
+                    } else {
+                        reverseCondidats.append(self.cells[row][col + dy])
+                        break
+                    }
+                } else {
+                    break
+                }
+            }
+        }
+        reverse(reverseCondidats: &reverseCondidats, color: color)
         
+        // Vertical
+        // Upper
+        for dx in 1...7 {
+            if (row - dx < Board.SIZE && row - dx >= 0) {
+                if self.cells[row - dx][col].color != "0" {
+                    if (self.cells[row - dx][col].color != color) {
+                        reverseCondidats.append(self.cells[row - dx][col])
+                    } else {
+                        reverseCondidats.append(self.cells[row - dx][col])
+                        break
+                    }
+                } else {
+                    break
+                }
+            }
+        }
+        reverse(reverseCondidats: &reverseCondidats, color: color)
+        
+        // Lower
+        for dx in 1...7 {
+            if (row + dx < Board.SIZE && row + dx >= 0) {
+                if self.cells[row + dx][col].color != "0" {
+                    if (self.cells[row + dx][col].color != color) {
+                        reverseCondidats.append(self.cells[row + dx][col])
+                    } else {
+                        reverseCondidats.append(self.cells[row + dx][col])
+                        break
+                    }
+                } else {
+                    break
+                }
+            }
+        }
+        reverse(reverseCondidats: &reverseCondidats, color: color)
+        
+        // Diagonal
+        
+        // Side
+        for d in 1...7 {
+            if (row + d < Board.SIZE && row + d >= 0 && col + d < Board.SIZE && col + d >= 0) {
+                if self.cells[row + d][col + d].color != "0" {
+                    if (self.cells[row + d][col + d].color != color) {
+                        reverseCondidats.append(self.cells[row + d][col + d])
+                    } else {
+                        reverseCondidats.append(self.cells[row + d][col + d])
+                        break
+                    }
+                } else {
+                    break
+                }
+            }
+        }
+        reverse(reverseCondidats: &reverseCondidats, color: color)
+        for d in 1...7 {
+            if (row - d < Board.SIZE && row - d >= 0 && col - d < Board.SIZE && col - d >= 0) {
+                if self.cells[row - d][col - d].color != "0" {
+                    if (self.cells[row - d][col - d].color != color) {
+                        reverseCondidats.append(self.cells[row - d][col - d])
+                    } else {
+                        reverseCondidats.append(self.cells[row - d][col - d])
+                        break
+                    }
+                } else {
+                    break
+                }
+            }
+        }
+        reverse(reverseCondidats: &reverseCondidats, color: color)
+        
+        // Main
+        for d in 1...7 {
+            if (row - d < Board.SIZE && row - d >= 0 && col + d < Board.SIZE && col + d >= 0) {
+                if self.cells[row - d][col + d].color != "0" {
+                    if (self.cells[row - d][col + d].color != color) {
+                        reverseCondidats.append(self.cells[row - d][col + d])
+                    } else {
+                        reverseCondidats.append(self.cells[row - d][col + d])
+                        break
+                    }
+                } else {
+                    break
+                }
+            }
+        }
+        reverse(reverseCondidats: &reverseCondidats, color: color)
+        
+        for d in 1...7 {
+            if (row + d < Board.SIZE && row + d >= 0 && col - d < Board.SIZE && col - d >= 0) {
+                if self.cells[row + d][col - d].color != "0" {
+                    if (self.cells[row + d][col - d].color != color) {
+                        reverseCondidats.append(self.cells[row + d][col - d])
+                    } else {
+                        reverseCondidats.append(self.cells[row + d][col - d])
+                        break
+                    }
+                } else {
+                    break
+                }
+            }
+        }
+        reverse(reverseCondidats: &reverseCondidats, color: color)
+
     }
 }

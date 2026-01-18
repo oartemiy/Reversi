@@ -23,8 +23,7 @@ struct BoardView: View {
                 HStack(spacing: 0) {
                     ForEach(0..<Board.SIZE, id: \.self) { col in
                         CellView(cell: board.getCell(row: row, col: col)).onTapGesture {
-                            print("Tap on \(row), \(col)")
-                            board.getCell(row: row, col: col).color = "B"
+                            viewModel.makePlayerMove(row: row, col: col)
                         }
                     }
                 }
