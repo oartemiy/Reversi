@@ -10,7 +10,7 @@ import SwiftUI
 
 class MainScreenViewModel: ObservableObject {
     @ObservedObject private var board: Board
-    @State private var players: [Player]
+    @Published private var players: [Player]
     @Published var currentPlayer: Int
     @State private var AI: Bool
     @Published private var error: Error? = nil
@@ -19,7 +19,8 @@ class MainScreenViewModel: ObservableObject {
         self.AI = AI
         self.board = Board()
         self.players = [
-            Player(num: 0), (!AI ? Player(num: 1) : Player(num: 1)),
+            Player(name: "", num: 0),
+            (!AI ? Player(name: "", num: 1) : Player(name: "", num: 1)),
         ]
         self.currentPlayer = 0
     }
@@ -36,6 +37,14 @@ class MainScreenViewModel: ObservableObject {
         return error
     }
 
+    func getPlayers() -> [Player] {
+        return players
+    }
+
+    func getCurrentPlayer() -> Player {
+        return players[currentPlayer]
+    }
+
     func makePlayerMove(row: Int, col: Int) {
         do {
             try board.makeMove(
@@ -45,11 +54,24 @@ class MainScreenViewModel: ObservableObject {
             )
             error = nil
             currentPlayer = (currentPlayer + 1) % 2
+            for i in 0..<2 {
+                players[i].setCntFigures(
+                    cnt: board.getScore(color: players[i].getColor())
+                )
+            }
+            players.sort(by: { $0.getCntFigures() > $1.getCntFigures() })
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+                self.board.makeChangeValueDefault()
+            }
         } catch BoardError.NotEmptyField {
             error = BoardError.NotEmptyField
             return
         } catch BoardError.NotNearOponent {
             error = BoardError.NotNearOponent
+            return
+        } catch BoardError.MoveNotAvailable {
+            error = BoardError.MoveNotAvailable
+            currentPlayer = (currentPlayer + 1) % 2
             return
         } catch {
             return

@@ -9,15 +9,24 @@ internal import Combine
 import Foundation
 import SwiftUI
 
-class Player: ObservableObject {
+class Player: ObservableObject, Identifiable, Equatable {
+    static func == (lhs: Player, rhs: Player) -> Bool {
+        return lhs.id == rhs.id
+    }
+    
     private var name: String
+    let id = UUID()
     @Published private var cntFigures: Int
     @Published private var color: Character
 
-    init(num: Int) {
-        self.name = "Player \(num)"
-        self.cntFigures = 0
-        self.color = (num == 0 ? "W" : "B")
+    init(name: String, num: Int) {
+        if (name != "") {
+            self.name = name
+        } else {
+            self.name = "Player \(num + 1)"
+        }
+        self.cntFigures = 2
+        self.color = (num == 0 ? "B" : "W")
     }
 
     func getName() -> String {
@@ -26,6 +35,10 @@ class Player: ObservableObject {
 
     func getColor() -> Character {
         return self.color
+    }
+    
+    func setCntFigures(cnt: Int) {
+        self.cntFigures = cnt
     }
 
     func getCntFigures() -> Int {

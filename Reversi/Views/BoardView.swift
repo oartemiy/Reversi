@@ -11,20 +11,21 @@ import SwiftUI
 struct BoardView: View {
     @ObservedObject var viewModel: MainScreenViewModel
     @ObservedObject var board: Board
-    
+
     init(viewModel: MainScreenViewModel) {
         self.viewModel = viewModel
         self.board = viewModel.getBoard()
     }
-    
+
     var body: some View {
         VStack(spacing: 0) {
             ForEach(0..<Board.SIZE, id: \.self) { row in
                 HStack(spacing: 0) {
                     ForEach(0..<Board.SIZE, id: \.self) { col in
-                        CellView(cell: board.getCell(row: row, col: col)).onTapGesture {
-                            viewModel.makePlayerMove(row: row, col: col)
-                        }
+                        CellView(cell: board.getCell(row: row, col: col))
+                            .onTapGesture {
+                                viewModel.makePlayerMove(row: row, col: col)
+                            }
                     }
                 }
             }
@@ -32,26 +33,47 @@ struct BoardView: View {
     }
 }
 
-struct CellView : View {
-    @ObservedObject private var cell : Cell
-    
-    
+struct CellView: View {
+    @ObservedObject private var cell: Cell
+    @State var rotationAngle: Double = 0
+
     init(cell: Cell) {
         self.cell = cell
     }
-    
+
     var body: some View {
         ZStack {
-            Rectangle().foregroundStyle(.white).frame(width: 46, height: 46).border(.gray)
-            if (cell.color == "W") {
-                Circle().foregroundStyle(.white).frame(width: 30, height: 30).overlay(Circle().stroke(.black, lineWidth: 3))
-            } else if (cell.color == "B") {
-                Circle().foregroundStyle(.black).frame(width: 33, height: 33)
+            Rectangle().foregroundStyle(.white).frame(width: 46, height: 46)
+                .border(.gray)
+            ZStack {
+                if cell.color == "W" {
+                    Circle().foregroundStyle(.white).frame(
+                        width: 30,
+                        height: 30
+                    ).overlay(Circle().stroke(.black, lineWidth: 3))
+                } else if cell.color == "B" {
+                    Circle().foregroundStyle(.black).frame(
+                        width: 33,
+                        height: 33
+                    )
+                }
+            }.rotation3DEffect(
+                .degrees(rotationAngle),
+                axis: (x: 0, y: 1, z: 0)
+            ).onChange(of: cell.isChanged) { newValue in
+                if newValue {
+                    withAnimation(.spring(response: 0.7, dampingFraction: 0.7)) {
+                        self.rotationAngle = 180
+                    }
+
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+                        self.rotationAngle = 0
+                    }
+                }
             }
         }
     }
 }
-
 
 #Preview {
     BoardView(viewModel: MainScreenViewModel(AI: false))
