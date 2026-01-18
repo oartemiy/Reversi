@@ -35,7 +35,6 @@ struct BoardView: View {
 
 struct CellView: View {
     @ObservedObject private var cell: Cell
-    @State var rotationAngle: Double = 0
 
     init(cell: Cell) {
         self.cell = cell
@@ -58,19 +57,10 @@ struct CellView: View {
                     )
                 }
             }.rotation3DEffect(
-                .degrees(rotationAngle),
+                .degrees(cell.isChanged ? 180 : 0),
                 axis: (x: 0, y: 1, z: 0)
-            ).onChange(of: cell.isChanged) { newValue in
-                if newValue {
-                    withAnimation(.spring(response: 0.7, dampingFraction: 0.7)) {
-                        self.rotationAngle = 180
-                    }
+            ).animation(.spring(response: 0.7, dampingFraction: 0.7), value: cell.isChanged)
 
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
-                        self.rotationAngle = 0
-                    }
-                }
-            }
         }
     }
 }

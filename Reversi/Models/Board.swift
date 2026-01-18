@@ -76,14 +76,6 @@ class Board: ObservableObject {
     func getCell(row: Int, col: Int) -> Cell {
         return cells[row][col]
     }
-    
-    func makeChangeValueDefault() {
-        for i in 0..<Board.SIZE {
-            for j in 0..<Board.SIZE {
-                self.cells[i][j].isChanged = false
-            }
-        }
-    }
 
     func makeMove(row: Int, col: Int, color: Character) throws {
         if !isMoveAviable(color: color) {
@@ -168,7 +160,7 @@ class Board: ObservableObject {
             for cell in reverseCondidats {
                 cell.color = color
                 if cell != reverseCondidats.first! && cell != reverseCondidats.last! {
-                    cell.isChanged = true
+                    cell.isChanged.toggle()
                 }
             }
         }

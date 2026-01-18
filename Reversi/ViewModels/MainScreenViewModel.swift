@@ -59,9 +59,9 @@ class MainScreenViewModel: ObservableObject {
                     cnt: board.getScore(color: players[i].getColor())
                 )
             }
-            players.sort(by: { $0.getCntFigures() > $1.getCntFigures() })
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
-                self.board.makeChangeValueDefault()
+            if players[0].getCntFigures() < players[1].getCntFigures() {
+                players.reverse()
+                currentPlayer = (currentPlayer + 1) % 2
             }
         } catch BoardError.NotEmptyField {
             error = BoardError.NotEmptyField
