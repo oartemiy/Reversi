@@ -5,26 +5,31 @@
 //  Created by Артемий Образцов on 18.01.2026.
 //
 
+internal import Combine
 import Foundation
 import SwiftUI
-internal import Combine
 
 struct SettingsView: View {
     @StateObject var viewModel = SettingsViewModel()
     let AILevels = ["Easy", "Hard"]
     @State var startGame = false
-    
+    @State var gameId = UUID()
+
     var body: some View {
         NavigationStack {
             VStack {
                 Text("Reversi").font(.title).bold().padding(.top, 10)
-                
-                HStack() {
-                    Toggle("AI🤖", isOn: $viewModel.AI).bold().font(.title2).padding(30)
+
+                HStack {
+                    Toggle("AI🤖", isOn: $viewModel.AI).bold().font(.title2)
+                        .padding(30)
                 }.padding(.top, 30)
-                if (viewModel.AI) {
+                if viewModel.AI {
                     HStack {
-                        Text("AI Level:").bold().font(.title2).padding(.leading, 30)
+                        Text("AI Level:").bold().font(.title2).padding(
+                            .leading,
+                            30
+                        )
                         Spacer()
                     }
                     Picker("AI Level", selection: $viewModel.AILevel) {
@@ -32,29 +37,56 @@ struct SettingsView: View {
                             Text(level).tag(level)
                         }
                     }.pickerStyle(SegmentedPickerStyle()).padding()
-                    
+
                 }
                 HStack {
-                    Text("Write your name:").bold().font(.title2).padding(.leading, 30)
+                    Text("Write your name:").bold().font(.title2).padding(
+                        .leading,
+                        30
+                    )
                     Spacer()
                 }
-                TextField("", text: $viewModel.player1Name).font(.title3).bold().padding(30)
+                TextField("", text: $viewModel.player1Name).font(.title3).bold()
+                    .padding(30)
                 if !viewModel.AI {
-                    TextField("", text: $viewModel.player2Name).font(.title3).bold().padding(30)
+                    TextField("", text: $viewModel.player2Name).font(.title3)
+                        .bold().padding(30)
                 }
                 Spacer()
-                
-                Button(action: {
-                    if (!viewModel.player1Name.trimmingCharacters(in: .whitespaces).isEmpty) {
-                        startGame.toggle()
+
+                Button(
+                    action: {
+                        if !viewModel.player1Name.trimmingCharacters(
+                            in: .whitespaces
+                        ).isEmpty {
+                            startGame.toggle()
+                        }
+                    },
+                    label: {
+                        Text("Start Game").font(.title).bold().padding()
                     }
-                }, label: {
-                    Text("Start Game").font(.title).bold().padding()
-                }).buttonStyle(.glassProminent)
-                
+                ).buttonStyle(.glassProminent).disabled(
+                    viewModel.player1Name.trimmingCharacters(in: .whitespaces)
+                        .isEmpty
+                        || (!viewModel.AI
+                            && viewModel.player2Name.trimmingCharacters(
+                                in: .whitespaces
+                            ).isEmpty)
+                )
+
+            }.navigationDestination(isPresented: $startGame) {
+                MainScreenView(
+                    AI: viewModel.AI,
+                    AILevel: viewModel.AILevel,
+                    name1: viewModel.player1Name,
+                    name2: viewModel.player2Name
+                ).id(gameId)
             }
+        }.onAppear {
+            startGame = false
+            gameId = UUID()
         }
-        
+
     }
 }
 

@@ -13,14 +13,23 @@ class MainScreenViewModel: ObservableObject {
     @Published private var players: [Player]
     @Published var currentPlayer: Int
     @State private var AI: Bool
-    @Published private var error: Error? = nil
+    @Published private var error: BoardError? = nil
+    @Published private var AILevel: String? = nil
 
-    init(AI: Bool) {
+    init(AI: Bool, AILevel: String, name1: String, name2: String) {
         self.AI = AI
+        if AI {
+            self.AILevel = AILevel
+        }
         self.board = Board()
         self.players = [
-            Player(name: "", num: 0),
-            (!AI ? Player(name: "", num: 1) : Player(name: "", num: 1)),
+            Player(name: name1, num: 0),
+            (!AI
+                ? Player(name: name2, num: 1)
+                : Player(
+                    name: "AI (\(AILevel)\(AILevel == "Easy" ? "😇" : "😈"))",
+                    num: 1
+                )),
         ]
         self.currentPlayer = 0
     }
@@ -33,7 +42,7 @@ class MainScreenViewModel: ObservableObject {
         return board
     }
 
-    func getError() -> Error? {
+    func getError() -> BoardError? {
         return error
     }
 
@@ -43,6 +52,14 @@ class MainScreenViewModel: ObservableObject {
 
     func getCurrentPlayer() -> Player {
         return players[currentPlayer]
+    }
+
+    func checkGameOver() -> Bool {
+        return
+            (!board.isMoveAviable(color: "W")
+            && !board.isMoveAviable(color: "B"))
+            || (board.getScore(color: "B") + board.getScore(color: "W") == Board
+                .SIZE * Board.SIZE)
     }
 
     func makePlayerMove(row: Int, col: Int) {
@@ -62,6 +79,9 @@ class MainScreenViewModel: ObservableObject {
             if players[0].getCntFigures() < players[1].getCntFigures() {
                 players.reverse()
                 currentPlayer = (currentPlayer + 1) % 2
+            }
+            if checkGameOver() {
+                error = BoardError.EndGame
             }
         } catch BoardError.NotEmptyField {
             error = BoardError.NotEmptyField

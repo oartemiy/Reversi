@@ -13,7 +13,7 @@ class Cell: ObservableObject {
     static func != (lhs: Cell, rhs: Cell) -> Bool {
         lhs.x != rhs.x || lhs.y != rhs.y
     }
-    
+
     var x, y: Int
     @Published var color: Character
     @Published var isChanged = false
@@ -29,6 +29,7 @@ enum BoardError: Error {
     case NotEmptyField
     case NotNearOponent
     case MoveNotAvailable
+    case EndGame
 }
 
 extension BoardError: LocalizedError {
@@ -37,6 +38,7 @@ extension BoardError: LocalizedError {
         case .NotEmptyField: "Field is not empty, try one more time"
         case .NotNearOponent: "You shoud put your piece near an opponent piece"
         case .MoveNotAvailable: "You can't make move, your opponet move"
+        case .EndGame: "Game is over"
         }
     }
 
@@ -108,7 +110,7 @@ class Board: ObservableObject {
             throw BoardError.NotEmptyField
         }
     }
-    
+
     func getScore(color: Character) -> Int {
         var ans = 0
         for i in 0..<Board.SIZE {
@@ -159,7 +161,9 @@ class Board: ObservableObject {
         if reverseCondidats.count > 2 && reverseCondidats.last?.color == color {
             for cell in reverseCondidats {
                 cell.color = color
-                if cell != reverseCondidats.first! && cell != reverseCondidats.last! {
+                if cell != reverseCondidats.first!
+                    && cell != reverseCondidats.last!
+                {
                     cell.isChanged.toggle()
                 }
             }

@@ -10,11 +10,31 @@ import Foundation
 import SwiftUI
 
 struct MainScreenView: View {
-    @StateObject private var viewModel = MainScreenViewModel(AI: false)
+    @ObservedObject private var viewModel: MainScreenViewModel
+    @State var AI: Bool
+
+    init(AI: Bool, AILevel: String, name1: String, name2: String) {
+        self.AI = AI
+        self.viewModel = MainScreenViewModel(
+            AI: AI,
+            AILevel: AILevel,
+            name1: name1,
+            name2: name2
+        )
+    }
 
     var body: some View {
         VStack {
             Text("Reversi").font(.largeTitle).bold().padding(.top, 10)
+            if viewModel.getError() == BoardError.EndGame {
+                let players = viewModel.getPlayers()
+                if players[0].getCntFigures() != players[1].getCntFigures() {
+                    let winner = players[0]
+                    Text("\(winner.getName()) has won🏆").font(.title).bold()
+                } else {
+                    Text("It's a draw🫥").font(.title).bold()
+                }
+            }
             List {
                 ForEach(0..<2) { i in
                     let player = viewModel.getPlayers()[i]
@@ -31,8 +51,9 @@ struct MainScreenView: View {
                         }
                         Text(player.getName()).font(.headline)
                         Spacer()
-                        Text("\(player.getCntFigures())").font(.subheadline)
+                        Text("\(player.getCntFigures())").font(.title3)
                             .bold()
+                        Text(player.getColor() == "B" ? "◉" : "◎").font(.title2)
                     }
                 }
             }.listStyle(.plain).animation(
@@ -41,9 +62,12 @@ struct MainScreenView: View {
             )
             HStack {
                 if viewModel.getError() != nil {
-                    
-                    Text("Error: \(viewModel.getError()!.localizedDescription)")
+                    if viewModel.getError() != BoardError.EndGame {
+                        Text(
+                            "Error: \(viewModel.getError()!.localizedDescription)"
+                        )
                         .bold().foregroundStyle(.red).padding(.top, 20)
+                    }
                 }
             }
             HStack {
@@ -53,7 +77,7 @@ struct MainScreenView: View {
                     .rotation3DEffect(
                         .degrees(
                             viewModel.getCurrentPlayer().getColor() == "B"
-                                ? 0 : 360
+                                ? 0 : 180
                         ),
                         axis: (x: 0, y: 1, z: 0)
                     )
@@ -74,12 +98,12 @@ struct MainScreenView: View {
                     )
             }
             Spacer()
-           
+
             BoardView(viewModel: viewModel)
         }
     }
 }
 
 #Preview {
-    MainScreenView()
+    MainScreenView(AI: false, AILevel: "Easy", name1: "", name2: "")
 }

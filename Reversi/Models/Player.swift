@@ -13,14 +13,14 @@ class Player: ObservableObject, Identifiable, Equatable {
     static func == (lhs: Player, rhs: Player) -> Bool {
         return lhs.id == rhs.id
     }
-    
+
     private var name: String
     let id = UUID()
     @Published private var cntFigures: Int
     @Published private var color: Character
 
     init(name: String, num: Int) {
-        if (name != "") {
+        if name != "" {
             self.name = name
         } else {
             self.name = "Player \(num + 1)"
@@ -36,7 +36,7 @@ class Player: ObservableObject, Identifiable, Equatable {
     func getColor() -> Character {
         return self.color
     }
-    
+
     func setCntFigures(cnt: Int) {
         self.cntFigures = cnt
     }

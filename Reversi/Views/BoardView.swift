@@ -25,7 +25,9 @@ struct BoardView: View {
                         CellView(cell: board.getCell(row: row, col: col))
                             .onTapGesture {
                                 viewModel.makePlayerMove(row: row, col: col)
-                            }
+                            }.disabled(
+                                viewModel.getError() == BoardError.EndGame
+                            )
                     }
                 }
             }
@@ -59,12 +61,22 @@ struct CellView: View {
             }.rotation3DEffect(
                 .degrees(cell.isChanged ? 180 : 0),
                 axis: (x: 0, y: 1, z: 0)
-            ).animation(.spring(response: 0.7, dampingFraction: 0.7), value: cell.isChanged)
+            ).animation(
+                .spring(response: 0.7, dampingFraction: 0.7),
+                value: cell.isChanged
+            )
 
         }
     }
 }
 
 #Preview {
-    BoardView(viewModel: MainScreenViewModel(AI: false))
+    BoardView(
+        viewModel: MainScreenViewModel(
+            AI: false,
+            AILevel: "Easy",
+            name1: "",
+            name2: ""
+        )
+    )
 }
