@@ -26,7 +26,7 @@ struct BoardView: View {
                             .onTapGesture {
                                 viewModel.makePlayerMove(row: row, col: col)
                             }.disabled(
-                                viewModel.getError() == BoardError.EndGame
+                                viewModel.getError() == BoardError.EndGame || viewModel.AIMove
                             )
                     }
                 }

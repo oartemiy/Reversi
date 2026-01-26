@@ -15,6 +15,7 @@ class MainScreenViewModel: ObservableObject {
     @State private var AI: Bool
     @Published private var error: BoardError? = nil
     @Published private var AILevel: String? = nil
+    @Published var AIMove: Bool = false
 
     init(AI: Bool, AILevel: String, name1: String, name2: String) {
         self.AI = AI
@@ -22,16 +23,18 @@ class MainScreenViewModel: ObservableObject {
             self.AILevel = AILevel
         }
         self.board = Board()
+        self.players = []
+        self.currentPlayer = 0
         self.players = [
             Player(name: name1, num: 0),
             (!AI
                 ? Player(name: name2, num: 1)
-                : Player(
+                : AIPlayer(
                     name: "AI (\(AILevel)\(AILevel == "Easy" ? "😇" : "😈"))",
-                    num: 1
+                    num: 1,
+                    board: self.board
                 )),
         ]
-        self.currentPlayer = 0
     }
 
     func getCurrentPlayerName() -> String {
@@ -82,6 +85,34 @@ class MainScreenViewModel: ObservableObject {
             }
             if checkGameOver() {
                 error = BoardError.EndGame
+            }
+            if AI {
+                let chousedCell = AILevel == "Easy" ? (players[currentPlayer] as! AIPlayer).chooseCellAIEasy() : (players[currentPlayer] as! AIPlayer).chooseCellAIHard()
+                AIMove.toggle()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    guard !self.checkGameOver() else { return }
+                    do {
+                        try self.board.makeMove(row: chousedCell.x, col: chousedCell.y, color: self.players[self.currentPlayer].getColor())
+                    } catch {
+                        print("Error")
+                    }
+                    self.error = nil
+                    self.currentPlayer = (self.currentPlayer + 1) % 2
+                    for i in 0..<2 {
+                        self.players[i].setCntFigures(
+                            cnt: self.board.getScore(color: self.players[i].getColor())
+                        )
+                    }
+                    if self.players[0].getCntFigures() < self.players[1].getCntFigures() {
+                        self.players.reverse()
+                        self.currentPlayer = (self.currentPlayer + 1) % 2
+                    }
+                    if self.checkGameOver() {
+                        self.error = BoardError.EndGame
+                    }
+                    self.AIMove.toggle()
+                }
+                
             }
         } catch BoardError.NotEmptyField {
             error = BoardError.NotEmptyField

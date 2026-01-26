@@ -23,6 +23,12 @@ class Cell: ObservableObject {
         self.y = 0
         self.color = "0"
     }
+    
+    init(cell: Cell) {
+        self.x = cell.x
+        self.y = cell.y
+        self.color = cell.color
+    }
 }
 
 enum BoardError: Error {
@@ -74,6 +80,10 @@ class Board: ObservableObject {
         }
         makeDefault()
     }
+    
+    init(otherBoard: Board) {
+        self.cells = otherBoard.deepCopy()
+    }
 
     func getCell(row: Int, col: Int) -> Cell {
         return cells[row][col]
@@ -121,6 +131,47 @@ class Board: ObservableObject {
             }
         }
         return ans
+    }
+    
+    func deepCopy() -> [[Cell]] {
+        var deepCopyCells = [[Cell]]()
+        for i in 0..<Board.SIZE {
+            var curRow: [Cell] = []
+            for j in 0..<Board.SIZE {
+                curRow.append(Cell(cell: self.cells[i][j]))
+            }
+            deepCopyCells.append(curRow)
+        }
+        return deepCopyCells
+    }
+    
+    func showAviableCells(color: Character) -> [Cell] {
+        var ans = [Cell]()
+        for i in 0..<Board.SIZE {
+            for j in 0..<Board.SIZE {
+                if self.cells[i][j].color == "0" {
+                    let row = i
+                    let col = j
+                    for dx in -1...1 {
+                        for dy in -1...1 {
+                            if (dx != 0 || dy != 0) && 0 <= row + dx
+                                && row + dx < Board.SIZE && 0 <= col + dy
+                                && col + dy < Board.SIZE
+                                && ((self.cells[row + dx][col + dy].color == "B"
+                                    && color == "W")
+                                    || (self.cells[row + dx][col + dy].color
+                                        == "W"
+                                        && color == "B"))
+                            {
+                                ans.append(self.cells[i][j])
+                            }
+                        }
+                    }
+                    
+                }
+            }
+        }
+        return ans;
     }
 
     func isMoveAviable(color: Character) -> Bool {
