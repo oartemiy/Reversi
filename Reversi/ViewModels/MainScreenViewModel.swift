@@ -89,7 +89,7 @@ class MainScreenViewModel: ObservableObject {
             if AI {
                 let chousedCell = AILevel == "Easy" ? (players[currentPlayer] as! AIPlayer).chooseCellAIEasy() : (players[currentPlayer] as! AIPlayer).chooseCellAIHard()
                 AIMove.toggle()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + (AILevel == "Easy" ? 1.5 : 3.0)) {
                     guard !self.checkGameOver() else { return }
                     do {
                         try self.board.makeMove(row: chousedCell.x, col: chousedCell.y, color: self.players[self.currentPlayer].getColor())
